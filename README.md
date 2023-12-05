@@ -4,9 +4,9 @@ Login to Google Container Registry (GCR) and Google Artifact Registry (GAR) usin
 
 This plugin is meant to be combined with the [gcp-workload-identity-federation](https://github.com/buildkite-plugins/gcp-workload-identity-federation-buildkite-plugin) plugin to provide short-lived credentials for accessing GCR and GAR registries.
 
-The advantage of using this plugin is that it uses `docker-credential-gcr` with Application Default Credentials to obtain an oauth2 access token and store it in the `$DOCKER_CONFIG/config.json` file. The file contains all of the credentials necessary to access GCR and GAR registries. No additional files are needed such as the `credentials.json` or `token.json` created by the `gcp-workload-identity-federation` plugin. Nor is the `docker-credential-gcr` needed after the token is acquired. This greatly simplifies certain workflows by reducing the number of files that need to be mounted into a docker or docker-compose context.
+The advantage of using this plugin is that it uses the `docker-credential-gcr` binary with Application Default Credentials to obtain an oauth2 access token and store it in the `$DOCKER_CONFIG/config.json` file. The file then contains all of the credentials necessary to access GCR and GAR registries. No additional files are needed such as the `credentials.json` or `token.json` created by the `gcp-workload-identity-federation` plugin. Nor is the `docker-credential-gcr` binary needed after the token is acquired. This simplifies certain Buildkite workflows by reducing the number of files that need to be mounted into a docker or docker-compose context.
 
-If the [docker-credential-gcr](https://github.com/GoogleCloudPlatform/docker-credential-gcr) utility is already installed on the build worker and available in `$PATH` it will be used, otherwise a version will be downloaded into a temp dir. The temp dir and the binary will be removed up after the plugin runs.
+If the [docker-credential-gcr](https://github.com/GoogleCloudPlatform/docker-credential-gcr) binary is already installed on the build worker and available in `$PATH` it will be used, otherwise a version will be downloaded into a temp dir. The temp dir and the binary will be removed after the plugin runs.
 
 ## Example
 
