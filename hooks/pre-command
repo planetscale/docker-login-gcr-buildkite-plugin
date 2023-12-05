@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+set -eu -o pipefail
+[[ -n "${BUILDKITE_PLUGIN_DOCKER_LOGIN_GCR_DEBUG:-}" ]] && set -x
+
+# https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases
+declare -A CHECKSUMS
+# TODO: is it possible to setup renovate to handle version + checksums here?
+VERSION='2.1.20'
+CHECKSUMS['amd64']='70bd328ba2f69816568902fadc1a55b1dcd3cfcf1194952884a054181f07f645'
+CHECKSUMS['arm64']='946a780ca26ebe8cf9e9dba468a9601aae4c771837cf4a2210b5fcd653301023'
+
+emoji=":docker::gcp:"
+
+# check at least one registry is specified:
+if [[ -z "${BUILDKITE_PLUGIN_DOCKER_LOGIN_GCR_REGISTRIES_0:-}" ]]; then
+  echo "+++ ${emoji} 🚨 No registries specified"
+  exit 1
+fi
+
+arch=$(uname -m)
+# convert to GOARCH:
+case "$arch" in
+"aarch64")
+  arch="arm64"
+  ;;
+"x86_64")
+  arch="amd64"
+  ;;
+*)
+  echo "Unsupported architecture: $arch"
+  return 1
+  ;;
+esac
+
+# set the $DOCKER_CREDS_GCR_BIN environment variable to the
+# path of the `docker-credential-gcr` binary.
+# if the binary is not installed it will be downloaded to a temp dir
+if ! DOCKER_CREDS_GCR_BIN=$(command -v docker-credential-gcr); then
+  # docker-credential-gcr is not installed, download and put it into the tmpdir
+  TMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'buildkiteXXXXXX')
+  trap 'rm -rf -- "$TMPDIR"' EXIT
+
+  tarball="$TMPDIR/docker-credential-gcr.tar.gz"
+
+  echo "~~~ ${emoji} Downloading docker-credential-gcr"
+  curl -L -o "$tarball" \
+    "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${VERSION}/docker-credential-gcr_linux_${arch}-${VERSION}.tar.gz"
+
+  checksum=$(openssl dgst -sha256 "$tarball" | awk '{print $2}')
+  if [[ "${checksum}" != "${CHECKSUMS[$arch]}" ]]; then
+    echo "+++ ${emoji} 🚨 Checksum verification failed for '$tarball', got '$checksum' and expected '${CHECKSUMS[$arch]}'"
+    return 1
+  fi
+
+  tar -C "$TMPDIR" -xzvf "$tarball" -- docker-credential-gcr
+  DOCKER_CREDS_GCR_BIN="$TMPDIR/docker-credential-gcr"
+fi
+
+# if TEST=1 we are running in the bats test environment. Set docker bin to 'docker-credential-gcr' (no path) so we can stub it
+[[ -n "${TEST:-}" ]] && DOCKER_CREDS_GCR_BIN="docker-credential-gcr"
+
+i=0
+while true; do
+  reg="BUILDKITE_PLUGIN_DOCKER_LOGIN_GCR_REGISTRIES_${i}"
+  [[ -z "${!reg:-}" ]] && break # $reg is not set, no more in the array
+  i=$((i + 1))
+
+  reg="${!reg}" # resolve the variable
+
+  echo "~~~ ${emoji} Logging in to Docker registry $reg"
+
+  echo "$reg" |
+    "$DOCKER_CREDS_GCR_BIN" get |
+    jq -r .Secret |
+    docker login --username 'oauth2accesstoken' --password-stdin "https://${reg}"
+done

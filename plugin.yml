@@ -1,0 +1,14 @@
+name: Docker Login for GCR and GAR registries
+description: Login to Google Cloud Docker registries using the docker-credential-gcr utility
+author: https://github.com/planetscale
+requirements:
+  - bash
+configuration:
+  properties:
+    registries:
+      type: array
+      items:
+        type: string
+  required:
+    - registries
+  additionalProperties: false

@@ -1,0 +1,22 @@
+version: '2'
+services:
+  lint-shellcheck:
+    image: koalaman/shellcheck-alpine:v0.8.0
+    volumes:
+      - ".:/plugin:ro"
+    entrypoint: sh
+    command:
+      - -c
+      - 'shellcheck /plugin/hooks/*'
+
+  lint-plugin:
+    image: buildkite/plugin-linter:v2.0.4
+    volumes:
+      - ".:/plugin:ro"
+    command:
+      - --id=planetscale/docker-login-gcr
+
+  tests:
+    image: buildkite/plugin-tester:v4.1.0
+    volumes:
+      - ".:/plugin:ro"
