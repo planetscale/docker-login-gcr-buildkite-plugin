@@ -1,4 +1,4 @@
-# Docker Login GCR (and GAR) Buildkite Plugin
+# Docker Login GCR (and GAR) Buildkite Plugin 
 
 Login to Google Container Registry (GCR) and Google Artifact Registry (GAR) using the `docker-credential-gcr` utility.
 
