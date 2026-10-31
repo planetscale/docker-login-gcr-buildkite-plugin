@@ -38,10 +38,10 @@ esac
 # if the binary is not installed it will be downloaded to a temp dir
 if ! DOCKER_CREDS_GCR_BIN=$(command -v docker-credential-gcr); then
   # docker-credential-gcr is not installed, download and put it into the tmpdir
-  TMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'buildkiteXXXXXX')
-  trap 'rm -rf -- "$TMPDIR"' EXIT
+  tmp_dir=$(mktemp -d 2>/dev/null || mktemp -d -t 'buildkiteXXXXXX')
+  trap 'rm -rf -- "$tmp_dir"' EXIT
 
-  tarball="$TMPDIR/docker-credential-gcr.tar.gz"
+  tarball="$tmp_dir/docker-credential-gcr.tar.gz"
 
   echo "~~~ ${emoji} Downloading docker-credential-gcr"
   curl -L -o "$tarball" \
@@ -53,8 +53,8 @@ if ! DOCKER_CREDS_GCR_BIN=$(command -v docker-credential-gcr); then
     return 1
   fi
 
-  tar -C "$TMPDIR" -xzvf "$tarball" -- docker-credential-gcr
-  DOCKER_CREDS_GCR_BIN="$TMPDIR/docker-credential-gcr"
+  tar -C "$tmp_dir" -xzvf "$tarball" -- docker-credential-gcr
+  DOCKER_CREDS_GCR_BIN="$tmp_dir/docker-credential-gcr"
 fi
 
 # if TEST=1 we are running in the bats test environment. Set docker bin to 'docker-credential-gcr' (no path) so we can stub it
