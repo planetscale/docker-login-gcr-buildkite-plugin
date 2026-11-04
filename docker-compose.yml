@@ -17,6 +17,6 @@ services:
       - --id=planetscale/docker-login-gcr
 
   tests:
-    image: buildkite/plugin-tester:v4.1.0@sha256:cc69234d0d6dde7a0cde8e52b27be279cc5618490f932ef2497cb4bab052e08b
+    image: buildkite/plugin-tester:v5.0.0@sha256:67e8715cbbb456759d2fcaf8c016ee70c19aa86bc71aab7ff117bd45f1340a39
     volumes:
       - ".:/plugin:ro"
